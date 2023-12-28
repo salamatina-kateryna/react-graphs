@@ -1,25 +1,21 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Handle, Position } from "react-flow-renderer";
+import { useDispatch, useSelector } from "react-redux";
 import Select, {
   GetStyles,
   GroupBase,
   OptionsOrGroups,
   components,
 } from "react-select";
+import { selectNodes, setNodes } from "../store/nodesSlice";
 
 interface DefaultNodeProps {
+  id: string;
   data: {
     label: string;
-    [key: string]: any; // Additional data properties
+    [key: string]: any;
   };
 }
-
-const allOptions = [
-  { value: "option 1", label: "option 1" },
-  { value: "option 2", label: "option 2" },
-  { value: "option 3", label: "option 3" },
-  { value: "option 4", label: "option 4" },
-];
 
 interface IInputPropsOption {
   getStyles: GetStyles<any, false, GroupBase<any>>;
@@ -41,13 +37,11 @@ const InputOption = ({
 }: IInputPropsOption) => {
   const [isActive, setIsActive] = useState(false);
   const onMouseDown = () => {
-    console.log(123123);
     setIsActive(true);
   };
   const onMouseUp = () => setIsActive(false);
   const onMouseLeave = () => setIsActive(false);
 
-  // styles
   let bg = "transparent";
   if (isFocused) bg = "#eee";
   if (isActive) bg = "#B2D4FF";
@@ -59,7 +53,6 @@ const InputOption = ({
     display: "flex ",
   };
 
-  // prop assignment
   const props = {
     ...innerProps,
     onMouseDown,
@@ -84,8 +77,8 @@ const InputOption = ({
   );
 };
 
-const DefaultNode: React.FC<DefaultNodeProps> = ({ data }) => {
-  const [selectedOptions, setSelectedOptions] = useState<
+const DefaultNode: React.FC<DefaultNodeProps> = ({ id, data }) => {
+  const [selectedOption, setSelectedOption] = useState<
     OptionsOrGroups<never, GroupBase<never>> | undefined
   >([]);
 
@@ -106,6 +99,32 @@ const DefaultNode: React.FC<DefaultNodeProps> = ({ data }) => {
     borderRadius: 4,
   };
 
+  const dispatch = useDispatch();
+  const nodes = useSelector(selectNodes);
+
+  const [selectedValue, setSelectedValue] = useState(1);
+  const [allOptions, setAllOptions] = useState<any[]>([]);
+
+  useEffect(() => {
+    const newAllOptions = new Array(6).fill(1).map((item, index) => {
+      const value = index + 1;
+
+      const nodeLabels = nodes
+        .filter((node, nodeIndex) => nodeIndex < parseInt(id) - 1)
+        .map((item) => item.data.label);
+
+      const label = (id !== "1" ? [...nodeLabels, value] : [value]).join("-");
+
+      return {
+        value,
+        label,
+      };
+    });
+
+    setAllOptions(newAllOptions);
+    setSelectedOption(newAllOptions[selectedValue - 1] as any);
+  }, [id, nodes, selectedValue, setAllOptions]);
+
   return (
     <div className="react-flow__node-default nodrag" style={styleGraph}>
       <Handle type="target" position={Position.Top} />
@@ -114,11 +133,34 @@ const DefaultNode: React.FC<DefaultNodeProps> = ({ data }) => {
         defaultValue={[]}
         closeMenuOnSelect={false}
         hideSelectedOptions={false}
-        onChange={(options: any) => {
-          console.log(options);
-          if (Array.isArray(options)) {
-            setSelectedOptions(options.map((opt) => opt.value));
+        value={selectedOption}
+        onChange={(option: any) => {
+          setSelectedOption(allOptions[option.value - 1]);
+          setSelectedValue(option.value);
+
+          const currentIndex = parseInt(id) - 1;
+          const newIndex = currentIndex + 1;
+          const updatedNodes = nodes.map((node) => node);
+
+          const currentItem = updatedNodes[currentIndex];
+          updatedNodes[currentIndex] = {
+            ...currentItem,
+            data: {
+              ...currentItem.data,
+              label: `${option.value}`,
+            },
+          };
+
+          if (nodes.length <= 3) {
+            updatedNodes[newIndex] = {
+              id: (newIndex + 1).toString(),
+              type: "defaultNode",
+              data: { label: "" },
+              position: { x: 250 * (newIndex + 1), y: 100 * (newIndex + 1) },
+            };
           }
+
+          dispatch(setNodes(updatedNodes));
         }}
         options={allOptions}
         components={{
