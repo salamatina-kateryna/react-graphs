@@ -1,6 +1,7 @@
 {
   "name": "graph-project",
   "version": "0.1.0",
+  "homepage": "https://salamatina-kateryna.github.io/react-graphs",
   "private": true,
   "dependencies": {
     "@reduxjs/toolkit": "^2.0.1",
@@ -22,6 +23,8 @@
     "web-vitals": "^2.1.4"
   },
   "scripts": {
+    "predeploy": "npm run build",
+    "deploy": "gh-pages -d build",
     "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
@@ -49,6 +52,7 @@
     "eslint": "^8.56.0",
     "eslint-config-prettier": "^9.1.0",
     "eslint-plugin-prettier": "^5.1.2",
+    "gh-pages": "^6.1.1",
     "prettier": "^3.1.1"
   }
 }
